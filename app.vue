@@ -134,11 +134,13 @@ body {
       font-size: 18px;
       margin-top: $size1;
       margin-bottom: $size2;
+      
     }
     input {
       background-color: transparent;
       border: $border;
       color: inherit;
+      
     }
   }
   button {
