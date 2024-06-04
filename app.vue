@@ -1,3 +1,32 @@
+<template>
+  <div>
+    <h1>New To-Do</h1>
+    <form @submit.prevent="addTodo()">
+      <label>New To-do </label>
+      <input v-model="newTodo" name="newTodo" autocomplete="off" />
+      <button>Add To-do</button>
+    </form>
+    <h2>To-do List</h2>
+    <ul>
+      <li v-for="(todo, index) in todos" :key="index">
+        <span
+          v-if="todo.id !== editingTodoId"
+          :class="{ done: todo.done }"
+          @click="toggleEdit(todo)"
+          >{{ todo.content }}</span
+        >
+        <input v-else v-model="editedTodoContent" />
+        <button v-if="todo.id !== editingTodoId" @click="editTodo(todo)">
+          Edit
+        </button>
+        <button v-else @click="saveTodo()">Save</button>
+        <button @click="removeTodo(index)">Remove</button>
+      </li>
+    </ul>
+    <h4 v-if="todos.length === 0">Empty list.</h4>
+  </div>
+</template>
+
 <script>
 import { ref, onMounted } from 'vue';
 
@@ -7,12 +36,15 @@ export default {
     const newTodo = ref('');
     const defaultData = [
       {
+        id: 1,
         done: false,
         content:
           'Write a blog post. Click the "remove" button to delete an item.',
       },
     ];
     const todos = ref([]);
+    const editingTodoId = ref(null);
+    const editedTodoContent = ref('');
 
     onMounted(() => {
       if (typeof window !== 'undefined') {
@@ -24,7 +56,11 @@ export default {
 
     function addTodo() {
       if (newTodo.value) {
+        const newId = todos.value.length
+          ? todos.value[todos.value.length - 1].id + 1
+          : 1;
         todos.value.push({
+          id: newId,
           done: false,
           content: newTodo.value,
         });
@@ -33,14 +69,32 @@ export default {
       }
     }
 
-    function doneTodo(todo) {
-      todo.done = !todo.done;
-      saveData();
+    function editTodo(todo) {
+      editingTodoId.value = todo.id;
+      editedTodoContent.value = todo.content;
+    }
+
+    function saveTodo() {
+      const index = todos.value.findIndex(
+        (todo) => todo.id === editingTodoId.value
+      );
+      if (index !== -1) {
+        todos.value[index].content = editedTodoContent.value;
+        editingTodoId.value = null;
+        saveData();
+      }
     }
 
     function removeTodo(index) {
       todos.value.splice(index, 1);
       saveData();
+    }
+
+    function toggleEdit(todo) {
+      if (editingTodoId.value !== todo.id) {
+        editingTodoId.value = todo.id;
+        editedTodoContent.value = todo.content;
+      }
     }
 
     function saveData() {
@@ -54,33 +108,16 @@ export default {
       todos,
       newTodo,
       addTodo,
-      doneTodo,
       removeTodo,
+      toggleEdit,
+      editingTodoId,
+      editedTodoContent,
+      saveTodo,
+      editTodo, // expose editTodo function
     };
   },
 };
 </script>
-
-<template>
-  <div>
-    <h1>New To-Do</h1>
-    <form @submit.prevent="addTodo()">
-      <label>New ToDo </label>
-      <input v-model="newTodo" name="newTodo" autocomplete="off" />
-      <button>Add ToDo</button>
-    </form>
-    <h2>ToDo List</h2>
-    <ul>
-      <li v-for="(todo, index) in todos" :key="index">
-        <span :class="{ done: todo.done }" @click="doneTodo(todo)">{{
-          todo.content
-        }}</span>
-        <button @click="removeTodo(index)">Remove</button>
-      </li>
-    </ul>
-    <h4 v-if="todos.length === 0">Empty list.</h4>
-  </div>
-</template>
 
 <style lang="scss">
 $border: 2px solid
@@ -93,7 +130,7 @@ $size2: 12px;
 $size3: 18px;
 $size4: 24px;
 $size5: 48px;
-$backgroundColor: #27292d;
+$backgroundColor: #122d42;
 $textColor: white;
 $primaryColor: #a0a4d9;
 $secondTextColor: #1f2023;
@@ -134,19 +171,18 @@ body {
       font-size: 18px;
       margin-top: $size1;
       margin-bottom: $size2;
-      
+      display: wrap;
     }
     input {
       background-color: transparent;
       border: $border;
       color: inherit;
-      
     }
   }
   button {
     cursor: pointer;
-    background-color: $primaryColor;
-    border: 1px solid $primaryColor;
+    background-color: #3ed1c9;
+    border: 1px solid #3ed1c9;
     color: $secondTextColor;
     font-weight: bold;
     outline: none;
@@ -169,6 +205,11 @@ body {
       margin-bottom: $size2;
       span {
         cursor: pointer;
+      }
+      input {
+        background-color: transparent;
+        border: $border;
+        color: inherit;
       }
       .done {
         text-decoration: line-through;
